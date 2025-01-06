@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "personal_financial_app",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "personal_financial_app (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "personal_financial_app (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "personal_financial_app (Flutter SM A217F)",
+            "program": "lib/main.dart",
+            "deviceId": "RR8NB0374MY",
+            "request": "launch",
+            "type": "dart"
+        }
+    ]
+}
