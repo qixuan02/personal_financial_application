@@ -15,8 +15,16 @@ import 'package:personal_financial_app/Screen/biometric_login.dart';
 //import 'package:personal_financial_application/models/stock.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class NavBar extends StatelessWidget {
+class NavBar extends StatefulWidget {
   const NavBar({super.key});
+
+  @override
+  State<NavBar> createState() => _NavBarState();
+}
+
+class _NavBarState extends State<NavBar> {
+  String _username = 'Z Cheh';
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -24,7 +32,7 @@ class NavBar extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountName: const Text('Z Cheh'),
+            accountName: Text(_username),
             accountEmail: Text(''),
             // currentAccountPicture: CircleAvatar(
             //   child: ClipOval(child: Image.asset('')),
@@ -38,7 +46,16 @@ class NavBar extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => UserSettingsPage()),
+                    MaterialPageRoute(
+                      builder: (context) => UserSettingsPage(
+                        onUsernameChanged: (newUsername) {
+                          setState(() {
+                            _username =
+                                newUsername; // Update the username in the NavBar
+                          });
+                        },
+                      ),
+                    ),
                   );
                 },
               ),

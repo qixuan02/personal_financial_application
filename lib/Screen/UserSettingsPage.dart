@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserSettingsPage extends StatefulWidget {
+  final Function(String) onUsernameChanged;
+
+  UserSettingsPage({required this.onUsernameChanged});
+
   @override
   _UserSettingsPageState createState() => _UserSettingsPageState();
 }
 
 class _UserSettingsPageState extends State<UserSettingsPage> {
   bool _biometricEnabled = false;
+  String _username = 'Z Cheh';
 
   @override
   void initState() {
@@ -30,6 +35,42 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
     await prefs.setBool('biometricEnabled', value);
   }
 
+  void _showEditUsernameDialog() {
+    TextEditingController _usernameController =
+        TextEditingController(text: _username);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Username'),
+          content: TextField(
+            controller: _usernameController,
+            decoration: InputDecoration(hintText: "Enter new username"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () {
+                setState(() {
+                  _username = _usernameController.text;
+                  widget.onUsernameChanged(_username);
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,23 +90,23 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
         child: Column(
           children: [
             SizedBox(height: 20),
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
+            Text('Hi, ' 
+            ,style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
             ),
             SizedBox(height: 10),
             Text(
-              'Z Cheh',
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              _username,
+              style: TextStyle(color: Colors.white, fontSize: 18,),
             ),
             IconButton(
               icon: Icon(Icons.edit, color: Colors.white),
-              onPressed: () {},
+              onPressed: () {
+                _showEditUsernameDialog();
+              },
             ),
             Divider(color: Colors.white54),
             SwitchListTile(
-              title: Text('Enable Biometric Login'),
+              title: Text('Enable Biometric Login', style: TextStyle(color: Colors.white),),
               value: _biometricEnabled,
               onChanged: _toggleBiometric,
             ),
