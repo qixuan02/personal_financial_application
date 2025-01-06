@@ -13,6 +13,7 @@ import 'package:personal_financial_app/Screen/biometric_login.dart';
 // import 'package:personal_financial_application/Savings.dart';
 // import 'package:personal_financial_application/LoginPage.dart';
 //import 'package:personal_financial_application/models/stock.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NavBar extends StatelessWidget {
   const NavBar({super.key});
@@ -65,7 +66,7 @@ class NavBar extends StatelessWidget {
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (BuildContext context) =>
-                      ChartPage(year: DateTime.now().year)));
+                      ChartPage(currentYear: DateTime.now().year)));
             },
           ),
           ListTile(
@@ -95,14 +96,28 @@ class NavBar extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.power_settings_new_rounded),
             title: Text('Logout'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => BiometricLogin()));
+            onTap: () async {
+              // Clear user session data
+              await _clearUserSession(); // Implement this method to clear session data
+
+              // Navigate to the LoginPage instead of BiometricLogin
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                    builder: (BuildContext context) => BiometricLogin()),
+              );
             },
           ),
           // others icondata settings_ , moving_, search_, notifications_
         ],
       ),
     );
+  }
+
+  // Method to clear user session data
+  Future<void> _clearUserSession() async {
+    // Clear any stored user data, e.g., using SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userToken'); // Example key for user token
+    // Add any other necessary cleanup here
   }
 }

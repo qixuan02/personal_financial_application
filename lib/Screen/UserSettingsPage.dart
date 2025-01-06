@@ -37,12 +37,6 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
         title: Text('Settings', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black54,
         iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Container(
         decoration: BoxDecoration(

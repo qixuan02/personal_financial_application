@@ -12,7 +12,6 @@ import 'package:personal_financial_app/database_helpers/category_database.dart';
 import 'package:personal_financial_app/database_helpers/category_limit_database.dart';
 import 'package:personal_financial_app/widgets/expense_search.dart';
 
-
 class Expenses extends StatefulWidget {
   final List<ExpenseModel> expenses;
 
@@ -455,7 +454,8 @@ class _ExpensesState extends State<Expenses> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => FilteredExpensesPage(
-                        filteredExpenses: filteredExpenses),
+                      filteredExpenses: filteredExpenses,
+                    ),
                   ),
                 );
               },
@@ -645,5 +645,32 @@ class _ExpensesState extends State<Expenses> {
       'Dec'
     ];
     return months[month - 1];
+  }
+}
+
+class ExpenseSearch {
+  static List<ExpenseModel> filterExpenses(
+      List<ExpenseModel> expenses, String query) {
+    // Trim whitespace from the query
+    query = query.trim();
+
+    if (query.isEmpty) {
+      return expenses; // Return all expenses if the query is empty
+    }
+
+    // Attempt to parse the query as a double
+    double? amountQuery = double.tryParse(query);
+
+    return expenses.where((expense) {
+      // Check if the item name contains the query (case insensitive)
+      bool matchesItem =
+          expense.item.toLowerCase().contains(query.toLowerCase());
+
+      // Check if the amount matches the query
+      bool matchesAmount = amountQuery != null && expense.amount == amountQuery;
+
+      // Return true if either condition matches
+      return matchesItem || matchesAmount;
+    }).toList();
   }
 }
