@@ -67,7 +67,7 @@ class _SpendingAlertPageState extends State<SpendingAlertPage> {
   @override
   void dispose() {
     _amountController.dispose();
-    super.dispose();
+    super.dispose(); //try
   }
 
   @override
