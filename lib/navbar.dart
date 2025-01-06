@@ -64,7 +64,8 @@ class NavBar extends StatelessWidget {
             title: Text('Chart'),
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => ChartPage()));
+                  builder: (BuildContext context) =>
+                      ChartPage(year: DateTime.now().year)));
             },
           ),
           ListTile(

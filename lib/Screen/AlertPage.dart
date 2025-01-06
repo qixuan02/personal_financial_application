@@ -75,8 +75,13 @@ class _SpendingAlertPageState extends State<SpendingAlertPage> {
     return Scaffold(
       drawer: NavBar(),
       appBar: AppBar(
-        title: const Text('Spending Alerts'),
+        title: const Text(
+          'Spending Alerts',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.black,
+        iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Padding(

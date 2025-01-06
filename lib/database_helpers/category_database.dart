@@ -2,7 +2,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class CategoryDatabaseHelper {
-  static final CategoryDatabaseHelper _instance = CategoryDatabaseHelper._internal();
+  static final CategoryDatabaseHelper _instance =
+      CategoryDatabaseHelper._internal();
   factory CategoryDatabaseHelper() => _instance;
   CategoryDatabaseHelper._internal();
 
@@ -29,7 +30,8 @@ class CategoryDatabaseHelper {
 
   Future<List<String>> getCategories() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('categories', columns: ['name']);
+    final List<Map<String, dynamic>> maps =
+        await db.query('categories', columns: ['name']);
     return List.generate(maps.length, (i) {
       return maps[i]['name'] as String;
     });
@@ -62,4 +64,15 @@ class CategoryDatabaseHelper {
       whereArgs: [oldCategory],
     );
   }
-} 
+
+  Future<List<Map<String, dynamic>>> getCategoryExpenses() async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
+      SELECT c.name AS category, SUM(e.amount) AS total
+      FROM categories c
+      LEFT JOIN expenses e ON c.name = e.item
+      GROUP BY c.name
+    ''');
+    return result;
+  }
+}

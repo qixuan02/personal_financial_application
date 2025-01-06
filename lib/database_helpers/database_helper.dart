@@ -144,10 +144,22 @@ class DatabaseHelper {
     // Get unique months from the expenses
     Set<String> uniqueMonths = {};
     for (var expense in allExpenses) {
-      uniqueMonths.add(expense.date.year.toString() + '-' + expense.date.month.toString().padLeft(2, '0'));
+      uniqueMonths.add(expense.date.year.toString() +
+          '-' +
+          expense.date.month.toString().padLeft(2, '0'));
     }
 
     // Calculate average based on the number of unique months
     return totalExpenses / uniqueMonths.length;
+  }
+
+  Future<List<Map<String, dynamic>>> getCategoryExpenses() async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
+      SELECT item AS category, SUM(amount) AS total
+      FROM expenses
+      GROUP BY item
+    ''');
+    return result;
   }
 }
