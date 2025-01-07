@@ -238,15 +238,15 @@ class _ExpensesState extends State<Expenses> {
     );
   }
 
-  Future<void> _deleteExpense(int index) async {
-    ExpenseModel expenseModel = items[index];
-    if (expenseModel.id == null) {
+  Future<void> _deleteExpense(ExpenseModel expenseToDelete) async {
+    if (expenseToDelete.id == null) {
       print('Error: Expense ID is null');
       return;
     }
 
-    bool? confirmDelete = await showDialog(
+    bool? confirmDelete = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text('Delete Expense'),
         content: Text('Are you sure you want to delete this expense?'),
@@ -265,22 +265,38 @@ class _ExpensesState extends State<Expenses> {
 
     if (confirmDelete == true) {
       try {
-        int result = await _dbHelper.deleteExpense(expenseModel.id!);
+        int result = await _dbHelper.deleteExpense(expenseToDelete.id!);
         if (result > 0) {
           await _loadExpenses(); // Reload all expenses
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Expense deleted successfully')),
-          );
+          if (mounted) {
+            // Check if widget is still mounted
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Expense deleted successfully'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete expense')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to delete expense'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
       } catch (e) {
         print('Error deleting expense: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting expense: ${e.toString()}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting expense: ${e.toString()}'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
   }
@@ -410,52 +426,48 @@ class _ExpensesState extends State<Expenses> {
 
   void _calculateCategoryExpenses() {
     categoryExpenses.clear();
-    // Group expenses by category and month
-    Map<String, Map<String, int>> monthlyExpensesByCategory = {};
+    // Get current month expenses only
+    String currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
 
+    // Group current month's expenses by category
     for (var item in items) {
-      if (!item.isIncome) {
-        // Create a key in format 'YYYY-MM' for each month
-        String monthKey = DateFormat('yyyy-MM').format(item.date);
-        String category = item.category;
-
-        // Initialize nested maps if they don't exist
-        monthlyExpensesByCategory[category] ??= {};
-        monthlyExpensesByCategory[category]![monthKey] ??= 0;
-
-        // Add expense to the corresponding month and category
-        monthlyExpensesByCategory[category]![monthKey] =
-            (monthlyExpensesByCategory[category]![monthKey] ?? 0) + item.amount;
+      String itemMonthKey = DateFormat('yyyy-MM').format(item.date);
+      // Only include expenses from current month
+      if (!item.isIncome && itemMonthKey == currentMonthKey) {
+        // Sum up expenses for each category
+        categoryExpenses[item.category] =
+            (categoryExpenses[item.category] ?? 0) + item.amount.toDouble();
       }
     }
 
-    // For the current month's total, update categoryExpenses
-    String currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
-    monthlyExpensesByCategory.forEach((category, monthlyTotals) {
-      categoryExpenses[category] =
-          (monthlyTotals[currentMonthKey] ?? 0).toDouble();
-    });
+    // Print for debugging
+    print('Current month category expenses: $categoryExpenses');
   }
 
   Future<void> _checkLimits() async {
-    String currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
-
-    for (var category in categoryExpenses.keys) {
+    // Get all categories that have limits set
+    for (var category in categories) {
+      // Use your categories list
       final limit = await _limitDbHelper.getCategoryLimit(category) ?? 0;
-      if (limit > 0) {
-        final currentMonthExpense = categoryExpenses[category] ?? 0;
-        final percentageUsed = (currentMonthExpense / limit) * 100;
+      print('Checking limit for $category: Limit = $limit'); // Debug print
 
-        // Convert int to double when passing to _notifyUser
-        if (currentMonthExpense >= limit) {
+      if (limit > 0) {
+        // Only check if a limit is set
+        final currentExpense = categoryExpenses[category] ?? 0.0;
+        print('Current expense for $category: $currentExpense'); // Debug print
+
+        final percentageUsed = (currentExpense / limit) * 100;
+        print('Percentage used: $percentageUsed%'); // Debug print
+
+        if (currentExpense >= limit) {
           _notifyUser(category, percentageUsed,
               isOverLimit: true,
-              currentMonthExpense: currentMonthExpense.toDouble(),
+              currentMonthExpense: currentExpense,
               limit: limit.toDouble());
         } else if (percentageUsed >= 90) {
           _notifyUser(category, percentageUsed,
               isOverLimit: false,
-              currentMonthExpense: currentMonthExpense.toDouble(),
+              currentMonthExpense: currentExpense,
               limit: limit.toDouble());
         }
       }
@@ -468,16 +480,16 @@ class _ExpensesState extends State<Expenses> {
       required double limit}) {
     String currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
     String message = isOverLimit
-        ? 'You have exceeded your monthly limit for $category in $currentMonth!\n\nSpent: RM${currentMonthExpense.toStringAsFixed(2)}\nMonthly Limit: RM${limit.toStringAsFixed(2)}'
-        : 'Warning: You have used ${percentageUsed.toStringAsFixed(1)}% of your monthly limit for $category in $currentMonth.\n\nSpent: RM${currentMonthExpense.toStringAsFixed(2)}\nMonthly Limit: RM${limit.toStringAsFixed(2)}';
+        ? 'You have exceeded the limit for $category in $currentMonth!\n\nSpent: RM${currentMonthExpense.toStringAsFixed(2)}\nCategory Limit: RM${limit.toStringAsFixed(2)}'
+        : 'Warning: You have used ${percentageUsed.toStringAsFixed(1)}% of your limit for $category in $currentMonth.\n\nSpent: RM${currentMonthExpense.toStringAsFixed(2)}\nCategory Limit: RM${limit.toStringAsFixed(2)}';
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text(isOverLimit
-              ? 'Monthly Limit Exceeded!'
-              : 'Warning: High Monthly Spending'),
+              ? 'Category Limit Exceeded!'
+              : 'Warning: High Category Spending'),
           content: Text(message),
           actions: [
             TextButton(
@@ -577,8 +589,8 @@ class _ExpensesState extends State<Expenses> {
             )
           : PageView.builder(
               itemCount: monthlyExpenses.keys.length,
-              itemBuilder: (context, index) {
-                String monthKey = monthlyExpenses.keys.elementAt(index);
+              itemBuilder: (context, pageIndex) {
+                String monthKey = monthlyExpenses.keys.elementAt(pageIndex);
                 List<ExpenseModel> expenses = monthlyExpenses[monthKey]!;
                 List<ExpenseModel> filteredMonthlyExpenses =
                     expenses.where((expense) {
@@ -652,8 +664,12 @@ class _ExpensesState extends State<Expenses> {
                                     ),
                                   ],
                                 ),
-                                onTap: () => _showUpdateExpenseDialog(index),
-                                onLongPress: () => _deleteExpense(index),
+                                onTap: () => _showUpdateExpenseDialog(
+                                    items.indexOf(expense)),
+                                onLongPress: () async {
+                                  // Handle deletion with proper state management
+                                  await _deleteExpense(expense);
+                                },
                               ),
                             ),
                           );
