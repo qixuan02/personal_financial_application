@@ -1,212 +1,244 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
+import 'package:personal_financial_app/database_helpers/category_database.dart';
+import 'package:personal_financial_app/database_helpers/category_limit_database.dart';
 import 'package:personal_financial_app/navbar.dart';
 
-class Alert {
-  final int id;
-  final double amount;
-  final String frequency;
-  final DateTime createdAt;
-
-  Alert({
-    required this.id,
-    required this.amount,
-    required this.frequency,
-    required this.createdAt,
-  });
-}
-
-class SpendingAlertPage extends StatefulWidget {
-  const SpendingAlertPage({Key? key}) : super(key: key);
+class CategoryAlertSettings extends StatefulWidget {
+  const CategoryAlertSettings({Key? key}) : super(key: key);
 
   @override
-  State<SpendingAlertPage> createState() => _SpendingAlertPageState();
+  _CategoryAlertSettingsState createState() => _CategoryAlertSettingsState();
 }
 
-class _SpendingAlertPageState extends State<SpendingAlertPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  String _selectedFrequency = 'Food';
-  List<Alert> alerts = [];
-  bool _showSuccess = false;
+class _CategoryAlertSettingsState extends State<CategoryAlertSettings> {
+  final CategoryLimitDatabaseHelper _limitDbHelper =
+      CategoryLimitDatabaseHelper();
+  final CategoryDatabaseHelper _categoryDbHelper = CategoryDatabaseHelper();
+  List<CategoryLimit> categories = [];
+  final Map<String, TextEditingController> _controllers = {};
+  bool _isLoading = true;
 
-  final List<String> _frequencies = ['Daily', 'Weekly', 'Food'];
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
 
-  void _addAlert() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _loadCategories() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // First get all categories
+      final List<String> categoryNames =
+          await _categoryDbHelper.getCategories();
+
+      // Then get all limits
+      final List<Map<String, dynamic>> limitsData =
+          await _limitDbHelper.getAllCategoryLimits();
+
+      // Create a map of category names to limits
+      final Map<String, double> limitMap = {
+        for (var item in limitsData)
+          item['category_name'] as String:
+              (item['category_limit'] as num).toDouble()
+      };
+
       setState(() {
-        alerts.add(
-          Alert(
-            id: DateTime.now().millisecondsSinceEpoch,
-            amount: double.parse(_amountController.text),
-            frequency: _selectedFrequency,
-            createdAt: DateTime.now(),
-          ),
-        );
-        _amountController.clear();
-        _showSuccess = true;
-      });
+        categories = categoryNames
+            .map((name) => CategoryLimit(
+                  categoryName: name,
+                  limit: limitMap[name]?.toDouble() ?? 0.0,
+                ))
+            .toList();
 
-      // Hide success message after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _showSuccess = false;
-          });
+        // Initialize controllers for loaded categories
+        for (var category in categories) {
+          _controllers[category.categoryName] = TextEditingController(
+            text: category.limit.toStringAsFixed(2),
+          );
         }
       });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading categories: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  void _deleteAlert(int id) {
-    setState(() {
-      alerts.removeWhere((alert) => alert.id == id);
-    });
+  Future<void> _saveAlertLimits() async {
+    try {
+      // Save all limits to database
+      for (var category in categories) {
+        final newLimit =
+            double.tryParse(_controllers[category.categoryName]!.text) ?? 0;
+        await _limitDbHelper.setCategoryLimit(
+          category.categoryName,
+          newLimit.round(), // Converting to int as per your database method
+        );
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Alert limits saved successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving limits: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _amountController.dispose();
-    super.dispose(); //try
+    _controllers.values.forEach((controller) => controller.dispose());
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: NavBar(),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Spending Alerts',
+        backgroundColor: Colors.black,
+        title: Text(
+          'Alert Settings',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.black,
         iconTheme: IconThemeData(color: Colors.white),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                child: Padding(
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+          : categories.isEmpty
+              ? Center(
+                  child: Text(
+                    'No categories found.\nAdd categories to set alerts.',
+                    style: TextStyle(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Set New Alert',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Amount',
-                            prefixText: 'RM',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter an amount';
-                            }
-                            if (double.tryParse(value) == null) {
-                              return 'Please enter a valid number';
-                            }
-                            if (double.parse(value) <= 0) {
-                              return 'Amount must be greater than 0';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(
-                            labelText: 'Category',
-                            border: OutlineInputBorder(),
-                          ),
-                          value: _selectedFrequency,
-                          items: _frequencies
-                              .map((freq) => DropdownMenuItem(
-                                    value: freq,
-                                    child: Text(freq),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedFrequency = value!;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _addAlert,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(50),
-                          ),
-                          child: const Text('Set Alert'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (_showSuccess) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    border: Border.all(color: Colors.green.shade200),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
+                  child: Column(
                     children: [
-                      Icon(Icons.check_circle, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Alert set successfully'),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: categories.length,
+                          itemBuilder: (context, index) {
+                            final category = categories[index];
+                            return Card(
+                              color: Colors.grey[900],
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        category.categoryName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 3,
+                                      child: TextField(
+                                        controller:
+                                            _controllers[category.categoryName],
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(decimal: true),
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(
+                                              RegExp(r'^\d*\.?\d{0,2}')),
+                                        ],
+                                        decoration: InputDecoration(
+                                          prefixText: '\$ ',
+                                          prefixStyle: const TextStyle(
+                                              color: Colors.white),
+                                          hintText: 'Enter limit amount',
+                                          hintStyle: TextStyle(
+                                              color: Colors.grey[400]),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: const BorderSide(
+                                                color: Colors.white),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: const BorderSide(
+                                                color: Colors.white),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: const BorderSide(
+                                                color: Colors.blue),
+                                          ),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _saveAlertLimits,
+                          icon: const Icon(Icons.save, color: Colors.white),
+                          label: const Text(
+                            'Save Alert Limits',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ],
-              if (alerts.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                const Text(
-                  'Active Alerts',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...alerts.map((alert) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text(
-                          'RM${alert.amount.toStringAsFixed(2)} ${alert.frequency}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          'Set on ${DateFormat('MMM d, yyyy').format(alert.createdAt)}',
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteAlert(alert.id),
-                        ),
-                      ),
-                    )),
-              ],
-            ],
-          ),
-        ),
-      ),
     );
   }
+}
+
+class CategoryLimit {
+  final String categoryName;
+  double limit;
+
+  CategoryLimit({
+    required this.categoryName,
+    required this.limit,
+  });
 }

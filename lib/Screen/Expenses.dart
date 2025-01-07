@@ -42,8 +42,7 @@ class _ExpensesState extends State<Expenses> {
   int totalExpenses = 0;
   int deposit = 0;
   List<String> categories = [];
-  Map<String, double> categoryExpenses =
-      {}; // Example structure to hold expenses
+  Map<String, double> categoryExpenses = {};
   String filterQuery = '';
 
   @override
@@ -57,8 +56,8 @@ class _ExpensesState extends State<Expenses> {
     items = await _dbHelper.getExpenses();
     items.sort((a, b) => b.date.compareTo(a.date));
     _calculateTotals();
-    await _checkLimits();
     _calculateCategoryExpenses();
+    await _checkLimits();
     setState(() {});
   }
 
@@ -87,10 +86,14 @@ class _ExpensesState extends State<Expenses> {
   }
 
   Future<void> _addExpense() async {
-    setState(() {});
-    if (pickedDate == null || selectedCategory == null) {
+    if (pickedDate == null) {
       pickedDate = DateTime.now();
-      print('Error: Category not selected');
+    }
+
+    if (selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select a category')),
+      );
       return;
     }
 
@@ -101,19 +104,184 @@ class _ExpensesState extends State<Expenses> {
         amount: convertedAmount,
         date: pickedDate!,
         isIncome: currentOption == 'income',
-        category: selectedCategory ?? 'Other',
+        category: selectedCategory!,
       );
 
       await _dbHelper.insertExpense(expenseModel);
-      print('Expense added: $expenseModel');
-      _loadExpenses();
-      Navigator.pop(context);
+      // Wait for the expenses to load
+
+      // Clear the form
       itemController.clear();
       amountController.clear();
       dateController.clear();
       selectedCategory = null;
+      pickedDate = null;
+
+      Navigator.pop(context);
+
+      await _loadExpenses();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Expense added successfully')),
+      );
     } catch (e) {
       print('Error adding expense: $e');
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding expense: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _showAddExpenseDialog() {
+    // Reset the form state
+    itemController.clear();
+    amountController.clear();
+    pickedDate = DateTime.now();
+    dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate!);
+    selectedCategory = null;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Add Expense'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: itemController,
+                    decoration: InputDecoration(labelText: 'Item'),
+                  ),
+                  TextField(
+                    controller: amountController,
+                    decoration: InputDecoration(labelText: 'Amount'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: dateController,
+                    decoration: InputDecoration(labelText: 'Date'),
+                    readOnly: true,
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: pickedDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          pickedDate = picked;
+                          dateController.text =
+                              DateFormat('dd/MM/yyyy').format(picked);
+                        });
+                      }
+                    },
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButton<String>(
+                          value: selectedCategory,
+                          hint: Text('Select Category'),
+                          items: categories.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedCategory = newValue;
+                            });
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddCategoryPage(),
+                            ),
+                          );
+                          await _loadCategories();
+                          setState(
+                              () {}); // Rebuild the dialog to show new categories
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _addExpense();
+                  },
+                  child: Text('ADD'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('CANCEL'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteExpense(int index) async {
+    ExpenseModel expenseModel = items[index];
+    if (expenseModel.id == null) {
+      print('Error: Expense ID is null');
+      return;
+    }
+
+    bool? confirmDelete = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Expense'),
+        content: Text('Are you sure you want to delete this expense?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmDelete == true) {
+      try {
+        int result = await _dbHelper.deleteExpense(expenseModel.id!);
+        if (result > 0) {
+          await _loadExpenses(); // Reload all expenses
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Expense deleted successfully')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete expense')),
+          );
+        }
+      } catch (e) {
+        print('Error deleting expense: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting expense: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -190,161 +358,14 @@ class _ExpensesState extends State<Expenses> {
                     expense.date = pickedDate ?? expense.date;
                     expense.category =
                         localSelectedCategory ?? expense.category;
-
                     await _dbHelper.updateExpense(expense);
-                    _loadExpenses();
                     Navigator.pop(context);
+                    await _loadExpenses();
                   },
                   child: Text('UPDATE'),
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text('CANCEL'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteExpense(int index) async {
-    ExpenseModel expenseModel = items[index];
-
-    // Show a confirmation dialog before deleting
-    bool? confirmDelete = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Expense'),
-        content: Text('Are you sure you want to delete this expense?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmDelete == true) {
-      // Delete the expense from the database
-      int result = await _dbHelper.deleteExpense(expenseModel.id!);
-      if (result == 1) {
-        setState(() {
-          items.removeAt(index);
-          _calculateTotals();
-        });
-
-        // Show a Snackbar for feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Expense deleted successfully')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete expense')),
-        );
-      }
-    }
-  }
-
-  void _showAddExpenseDialog() {
-    dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        String? localSelectedCategory = selectedCategory;
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text('Add Expense'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: itemController,
-                    decoration: InputDecoration(labelText: 'Item'),
-                  ),
-                  TextField(
-                    controller: amountController,
-                    decoration: InputDecoration(labelText: 'Amount'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextField(
-                    controller: dateController,
-                    decoration: InputDecoration(labelText: 'Date'),
-                    readOnly: true,
-                    onTap: () async {
-                      DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          pickedDate = picked;
-                          dateController.text =
-                              DateFormat('dd/MM/yyyy').format(picked);
-                        });
-                      }
-                    },
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButton<String>(
-                          value: localSelectedCategory,
-                          hint: Text('Select Category'),
-                          items: categories.map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              localSelectedCategory = newValue;
-                            });
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.add),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddCategoryPage(),
-                            ),
-                          ).then((_) => _loadCategories());
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    selectedCategory = localSelectedCategory;
-                    _addExpense();
-                  },
-                  child: Text('ADD'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    itemController.clear();
-                    amountController.clear();
-                    dateController.clear();
                     Navigator.pop(context);
                   },
                   child: Text('CANCEL'),
@@ -387,37 +408,77 @@ class _ExpensesState extends State<Expenses> {
     };
   }
 
+  void _calculateCategoryExpenses() {
+    categoryExpenses.clear();
+    // Group expenses by category and month
+    Map<String, Map<String, int>> monthlyExpensesByCategory = {};
+
+    for (var item in items) {
+      if (!item.isIncome) {
+        // Create a key in format 'YYYY-MM' for each month
+        String monthKey = DateFormat('yyyy-MM').format(item.date);
+        String category = item.category;
+
+        // Initialize nested maps if they don't exist
+        monthlyExpensesByCategory[category] ??= {};
+        monthlyExpensesByCategory[category]![monthKey] ??= 0;
+
+        // Add expense to the corresponding month and category
+        monthlyExpensesByCategory[category]![monthKey] =
+            (monthlyExpensesByCategory[category]![monthKey] ?? 0) + item.amount;
+      }
+    }
+
+    // For the current month's total, update categoryExpenses
+    String currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
+    monthlyExpensesByCategory.forEach((category, monthlyTotals) {
+      categoryExpenses[category] =
+          (monthlyTotals[currentMonthKey] ?? 0).toDouble();
+    });
+  }
+
   Future<void> _checkLimits() async {
+    String currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
+
     for (var category in categoryExpenses.keys) {
       final limit = await _limitDbHelper.getCategoryLimit(category) ?? 0;
       if (limit > 0) {
-        final expense = categoryExpenses[category] ?? 0;
-        final percentageUsed = (expense / limit) * 100;
-        if (percentageUsed >= 90) {
-          _notifyUser(category, percentageUsed);
+        final currentMonthExpense = categoryExpenses[category] ?? 0;
+        final percentageUsed = (currentMonthExpense / limit) * 100;
+
+        // Convert int to double when passing to _notifyUser
+        if (currentMonthExpense >= limit) {
+          _notifyUser(category, percentageUsed,
+              isOverLimit: true,
+              currentMonthExpense: currentMonthExpense.toDouble(),
+              limit: limit.toDouble());
+        } else if (percentageUsed >= 90) {
+          _notifyUser(category, percentageUsed,
+              isOverLimit: false,
+              currentMonthExpense: currentMonthExpense.toDouble(),
+              limit: limit.toDouble());
         }
       }
     }
   }
 
-  void _calculateCategoryExpenses() {
-    categoryExpenses.clear();
-    for (var item in items) {
-      if (!item.isIncome) {
-        categoryExpenses[item.category] =
-            (categoryExpenses[item.category] ?? 0) + item.amount;
-      }
-    }
-  }
+  void _notifyUser(String category, double percentageUsed,
+      {bool isOverLimit = false,
+      required double currentMonthExpense,
+      required double limit}) {
+    String currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
+    String message = isOverLimit
+        ? 'You have exceeded your monthly limit for $category in $currentMonth!\n\nSpent: RM${currentMonthExpense.toStringAsFixed(2)}\nMonthly Limit: RM${limit.toStringAsFixed(2)}'
+        : 'Warning: You have used ${percentageUsed.toStringAsFixed(1)}% of your monthly limit for $category in $currentMonth.\n\nSpent: RM${currentMonthExpense.toStringAsFixed(2)}\nMonthly Limit: RM${limit.toStringAsFixed(2)}';
 
-  void _notifyUser(String category, double percentageUsed) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Warning: High Spending'),
-          content: Text(
-              'You have used ${percentageUsed.toStringAsFixed(1)}% of your limit for $category.'),
+          title: Text(isOverLimit
+              ? 'Monthly Limit Exceeded!'
+              : 'Warning: High Monthly Spending'),
+          content: Text(message),
           actions: [
             TextButton(
               child: Text('OK'),
@@ -507,93 +568,102 @@ class _ExpensesState extends State<Expenses> {
           ),
         ],
       ),
-      body: PageView.builder(
-        itemCount: monthlyExpenses.keys.length,
-        itemBuilder: (context, index) {
-          String monthKey = monthlyExpenses.keys.elementAt(index);
-          List<ExpenseModel> expenses = monthlyExpenses[monthKey]!;
-          List<ExpenseModel> filteredMonthlyExpenses =
-              expenses.where((expense) {
-            return filteredExpenses.contains(expense);
-          }).toList();
-
-          Map<String, int> monthlyTotals =
-              _calculateMonthlyTotals(filteredMonthlyExpenses);
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  DateFormat('MMMM yyyy')
-                      .format(DateTime.parse(monthKey + '-01')),
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
-                ),
+      body: items.isEmpty
+          ? Center(
+              child: Text(
+                'No expenses found',
+                style: TextStyle(color: Colors.white),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+            )
+          : PageView.builder(
+              itemCount: monthlyExpenses.keys.length,
+              itemBuilder: (context, index) {
+                String monthKey = monthlyExpenses.keys.elementAt(index);
+                List<ExpenseModel> expenses = monthlyExpenses[monthKey]!;
+                List<ExpenseModel> filteredMonthlyExpenses =
+                    expenses.where((expense) {
+                  return filteredExpenses.contains(expense);
+                }).toList();
+
+                Map<String, int> monthlyTotals =
+                    _calculateMonthlyTotals(filteredMonthlyExpenses);
+
+                return Column(
                   children: [
-                    _buildSummaryCard(
-                        'Deposit', monthlyTotals['deposit']!, Colors.white),
-                    _buildSummaryCard(
-                        'Income', monthlyTotals['income']!, Colors.blue),
-                    _buildSummaryCard(
-                        'Expenses', monthlyTotals['expenses']!, Colors.red),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: filteredMonthlyExpenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = filteredMonthlyExpenses[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 4.0, horizontal: 8.0),
-                      child: Card(
-                        color: Colors.grey[800],
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(8.0),
-                          title: Text(
-                            expense.item,
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                          subtitle: Text(
-                            expense.category,
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          trailing: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'RM ${expense.amount}',
-                                style: TextStyle(
-                                    color: Colors.redAccent, fontSize: 16),
-                              ),
-                              Text(
-                                '${expense.date.day} ${_monthName(expense.date.month)} ${expense.date.year}',
-                                style: TextStyle(
-                                    color: Colors.white70, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          onTap: () => _showUpdateExpenseDialog(index),
-                          onLongPress: () => _deleteExpense(index),
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        DateFormat('MMMM yyyy')
+                            .format(DateTime.parse(monthKey + '-01')),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildSummaryCard('Deposit',
+                              monthlyTotals['deposit']!, Colors.white),
+                          _buildSummaryCard(
+                              'Income', monthlyTotals['income']!, Colors.blue),
+                          _buildSummaryCard('Expenses',
+                              monthlyTotals['expenses']!, Colors.red),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredMonthlyExpenses.length,
+                        itemBuilder: (context, index) {
+                          final expense = filteredMonthlyExpenses[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 4.0, horizontal: 8.0),
+                            child: Card(
+                              color: Colors.grey[800],
+                              child: ListTile(
+                                contentPadding: EdgeInsets.all(8.0),
+                                title: Text(
+                                  expense.item,
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 18),
+                                ),
+                                subtitle: Text(
+                                  expense.category,
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                                trailing: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'RM ${expense.amount}',
+                                      style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontSize: 16),
+                                    ),
+                                    Text(
+                                      '${expense.date.day} ${_monthName(expense.date.month)} ${expense.date.year}',
+                                      style: TextStyle(
+                                          color: Colors.white70, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                                onTap: () => _showUpdateExpenseDialog(index),
+                                onLongPress: () => _deleteExpense(index),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
       floatingActionButton: Container(
         width: 50,
         height: 50,

@@ -107,7 +107,7 @@ class _NavBarState extends State<NavBar> {
             title: const Text('Alert'),
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => SpendingAlertPage()));
+                  builder: (BuildContext context) => CategoryAlertSettings()));
             },
           ),
           ListTile(

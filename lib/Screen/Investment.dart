@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:personal_financial_app/Screen/InvestmentMY.dart';
+import 'package:personal_financial_app/Screen/StockSuggestionPage.dart';
 import 'package:personal_financial_app/navbar.dart';
 import 'package:personal_financial_app/widgets/fetch_stock_data.dart';
 
@@ -17,7 +18,7 @@ class _InvestmentState extends State<Investment> {
     'GOOG',
     'AMZN'
   ];
-  
+
   List<String> userStockSymbols = [];
   List<Stocks> _stocks = [];
   bool _isLoading = true;
@@ -127,6 +128,16 @@ class _InvestmentState extends State<Investment> {
                     ),
                     onSubmitted: _addUserStock,
                   ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => StockSuggestionPage()),
+                    );
+                  },
+                  child: Text('View Stock Suggestions'),
                 ),
                 Expanded(
                   child: _isLoading
