@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class BiometricLogin extends StatefulWidget {
   @override
   _BiometricLoginState createState() => _BiometricLoginState();
@@ -129,10 +128,8 @@ class _BiometricLoginState extends State<BiometricLogin> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(hintText: 'Enter your PIN'),
             onSubmitted: (value) {
-              // Validate PIN here
               Navigator.of(context).pop();
               if (value == '1234') {
-                // Example PIN check
                 _navigateToExpenses();
               } else {
                 _showRetryDialog();

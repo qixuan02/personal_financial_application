@@ -21,7 +21,7 @@ class _FinancialPageState extends State<FinancialPage> {
   final amountController = TextEditingController();
   final dateController = TextEditingController();
   DateTime? pickedDate;
-  String selectedType = 'savings'; // Default selection
+  String selectedType = 'savings';
 
   @override
   void initState() {
@@ -58,34 +58,29 @@ class _FinancialPageState extends State<FinancialPage> {
   }
 
   Future<void> _editFinancialData(FinancialModel entry) async {
-    // Set the fields for editing
     itemController.text = entry.name;
     amountController.text = entry.amount.toString();
     pickedDate = entry.date;
     selectedType = entry.type;
 
-    // Show the dialog to edit the entry
     _showAddFinancialDialog(isEdit: true, entry: entry);
   }
 
-  // New method to update financial data
   Future<void> _updateFinancialData(FinancialModel entry) async {
     FinancialModel updatedEntry = FinancialModel(
-      id: entry.id, // Ensure to pass the ID for the update
+      id: entry.id,
       name: itemController.text,
       amount: double.parse(amountController.text),
       date: pickedDate ?? DateTime.now(),
       type: selectedType,
     );
 
-    await _dbHelper.updateFinancialData(
-        updatedEntry); // Call the update method in the database helper
-    _loadFinancialData(); // Reload data after update
-    Navigator.of(context).pop(); // Close the dialog
+    await _dbHelper.updateFinancialData(updatedEntry);
+    _loadFinancialData();
+    Navigator.of(context).pop();
   }
 
   Future<void> _deleteFinancialData(int id) async {
-    // Show confirmation dialog before deletion
     bool? confirmDelete = await _showDeleteConfirmationDialog();
     if (confirmDelete == true) {
       await _dbHelper.deleteFinancialData(id);
@@ -142,7 +137,7 @@ class _FinancialPageState extends State<FinancialPage> {
             TextButton(
               onPressed: () {
                 if (isEdit && entry != null) {
-                  _updateFinancialData(entry); // Call the new update method
+                  _updateFinancialData(entry);
                 } else {
                   _addFinancialData();
                 }

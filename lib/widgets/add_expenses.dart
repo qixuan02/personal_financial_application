@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-//import '../Screen/AlertPage.dart';
 
 class AddExpenses extends StatefulWidget {
   final TextEditingController itemController;
@@ -79,17 +78,6 @@ class _AddExpensesState extends State<AddExpenses> {
             });
           },
         ),
-        // ElevatedButton(
-        //   onPressed: () {
-        //     Navigator.push(
-        //       context,
-        //       MaterialPageRoute(
-        //         builder: (context) => AlertPage(categories: categories),
-        //       ),
-        //     );
-        //   },
-        //   child: Text('Set Category Limits'),
-        // ),
       ],
     );
   }

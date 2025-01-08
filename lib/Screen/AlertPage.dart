@@ -29,15 +29,12 @@ class _CategoryAlertSettingsState extends State<CategoryAlertSettings> {
     try {
       setState(() => _isLoading = true);
 
-      // First get all categories
       final List<String> categoryNames =
           await _categoryDbHelper.getCategories();
 
-      // Then get all limits
       final List<Map<String, dynamic>> limitsData =
           await _limitDbHelper.getAllCategoryLimits();
 
-      // Create a map of category names to limits
       final Map<String, double> limitMap = {
         for (var item in limitsData)
           item['category_name'] as String:
@@ -52,7 +49,6 @@ class _CategoryAlertSettingsState extends State<CategoryAlertSettings> {
                 ))
             .toList();
 
-        // Initialize controllers for loaded categories
         for (var category in categories) {
           _controllers[category.categoryName] = TextEditingController(
             text: category.limit.toStringAsFixed(2),
@@ -73,13 +69,12 @@ class _CategoryAlertSettingsState extends State<CategoryAlertSettings> {
 
   Future<void> _saveAlertLimits() async {
     try {
-      // Save all limits to database
       for (var category in categories) {
         final newLimit =
             double.tryParse(_controllers[category.categoryName]!.text) ?? 0;
         await _limitDbHelper.setCategoryLimit(
           category.categoryName,
-          newLimit.round(), // Converting to int as per your database method
+          newLimit.round(),
         );
       }
 
@@ -172,7 +167,7 @@ class _CategoryAlertSettingsState extends State<CategoryAlertSettings> {
                                               RegExp(r'^\d*\.?\d{0,2}')),
                                         ],
                                         decoration: InputDecoration(
-                                          prefixText: '\$ ',
+                                          prefixText: '\RM ',
                                           prefixStyle: const TextStyle(
                                               color: Colors.white),
                                           hintText: 'Enter limit amount',
@@ -221,7 +216,7 @@ class _CategoryAlertSettingsState extends State<CategoryAlertSettings> {
                             style: TextStyle(color: Colors.white),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: Colors.grey[800],
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),

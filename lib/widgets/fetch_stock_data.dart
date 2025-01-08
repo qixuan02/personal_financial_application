@@ -23,10 +23,8 @@ class StockService {
           final data = json.decode(response.body);
           final stock = Stocks(
             symbol: symbol,
-            company:
-                symbol, // Replace with a mapping of symbol to company name if needed
-            price:
-                (data['c'] ?? 0).toDouble(), // Ensure it's converted to double
+            company: symbol,
+            price: (data['c'] ?? 0).toDouble(),
           );
           stocks.add(stock);
         } else {

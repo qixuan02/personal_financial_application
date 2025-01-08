@@ -34,7 +34,6 @@ class FundCondition extends StatelessWidget {
           SizedBox(
             height: 15,
             width: 15,
-            //child: Image.asset("images/$icon.png"),
           ),
           const SizedBox(width: 6),
           Column(

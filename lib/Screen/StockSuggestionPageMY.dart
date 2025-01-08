@@ -3,12 +3,12 @@ import 'package:personal_financial_app/database_helpers/financial_database_helpe
 import 'package:personal_financial_app/database_helpers/database_helper.dart';
 import 'package:personal_financial_app/models/expense_model.dart';
 
-class StockSuggestionPage extends StatefulWidget {
+class StockSuggestionMYPage extends StatefulWidget {
   @override
-  _StockSuggestionPageState createState() => _StockSuggestionPageState();
+  _StockSuggestionMYPageState createState() => _StockSuggestionMYPageState();
 }
 
-class _StockSuggestionPageState extends State<StockSuggestionPage> {
+class _StockSuggestionMYPageState extends State<StockSuggestionMYPage> {
   double _averageIncome = 0;
   double _totalSavings = 0;
   double _totalDebts = 0;
@@ -60,7 +60,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
           _suggestedStocks = [
             {
               'type': 'Micro-Investment Stocks',
-              'priceRange': '\$1 - \$5 per share',
+              'priceRange': 'RM1 - RM5 per share',
               'description':
                   'Start small with fractional shares or penny stocks',
               'allocation': (availableFunds * 0.1).toStringAsFixed(2),
@@ -74,7 +74,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
           _suggestedStocks = [
             {
               'type': 'Value Stocks',
-              'priceRange': '\$5 - \$20 per share',
+              'priceRange': 'RM5 - RM20 per share',
               'description': 'Stable companies with reliable dividends',
               'allocation': (availableFunds * 0.3).toStringAsFixed(2),
               'riskLevel': 'Low',
@@ -95,7 +95,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
           _suggestedStocks = [
             {
               'type': 'Growth Stocks',
-              'priceRange': '\$20 - \$50 per share',
+              'priceRange': 'RM20 - RM50 per share',
               'description': 'Companies with good growth potential',
               'allocation': (availableFunds * 0.4).toStringAsFixed(2),
               'riskLevel': 'Medium',
@@ -103,7 +103,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
             },
             {
               'type': 'Dividend Stocks',
-              'priceRange': '\$30 - \$70 per share',
+              'priceRange': 'RM30 - RM70 per share',
               'description': 'Regular income through dividends',
               'allocation': (availableFunds * 0.3).toStringAsFixed(2),
               'riskLevel': 'Low-Medium',
@@ -116,7 +116,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
           _suggestedStocks = [
             {
               'type': 'Blue-Chip Stocks',
-              'priceRange': '\$50 - \$200 per share',
+              'priceRange': 'RM50 - RM200 per share',
               'description': 'Large, stable companies',
               'allocation': (availableFunds * 0.4).toStringAsFixed(2),
               'riskLevel': 'Medium',
@@ -124,7 +124,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
             },
             {
               'type': 'Growth Stocks',
-              'priceRange': '\$30 - \$150 per share',
+              'priceRange': 'RM30 - RM150 per share',
               'description': 'High-growth potential companies',
               'allocation': (availableFunds * 0.3).toStringAsFixed(2),
               'riskLevel': 'High',
@@ -132,7 +132,7 @@ class _StockSuggestionPageState extends State<StockSuggestionPage> {
             },
             {
               'type': 'Dividend Growth',
-              'priceRange': '\$40 - \$100 per share',
+              'priceRange': 'RM40 - RM100 per share',
               'description': 'Increasing dividend payments',
               'allocation': (availableFunds * 0.3).toStringAsFixed(2),
               'riskLevel': 'Medium',

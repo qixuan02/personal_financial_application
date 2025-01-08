@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:personal_financial_app/Screen/Investment.dart';
+import 'package:personal_financial_app/Screen/StockSuggestionPageMY.dart';
 import 'package:personal_financial_app/navbar.dart';
 
 class Stock {
@@ -47,8 +48,7 @@ class _InvestmentMYState extends State<InvestmentMY> {
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          print(
-              'Response for ${stock['symbol']}: ${response.body}'); // Debug print
+          print('Response for ${stock['symbol']}: ${response.body}');
 
           final price =
               data['chart']['result'][0]['meta']['regularMarketPrice'];
@@ -147,6 +147,16 @@ class _InvestmentMYState extends State<InvestmentMY> {
                       ),
                     ),
                   ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => StockSuggestionMYPage()),
+                    );
+                  },
+                  child: Text('View Stock Suggestions'),
                 ),
                 Expanded(
                   child: _isLoading

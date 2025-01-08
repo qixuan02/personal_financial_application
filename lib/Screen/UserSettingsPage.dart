@@ -90,13 +90,18 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
         child: Column(
           children: [
             SizedBox(height: 20),
-            Text('Hi, ' 
-            ,style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
-            ),
+            Text('Hi, ',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Text(
               _username,
-              style: TextStyle(color: Colors.white, fontSize: 18,),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+              ),
             ),
             IconButton(
               icon: Icon(Icons.edit, color: Colors.white),
@@ -106,11 +111,13 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
             ),
             Divider(color: Colors.white54),
             SwitchListTile(
-              title: Text('Enable Biometric Login', style: TextStyle(color: Colors.white),),
+              title: Text(
+                'Enable Biometric Login',
+                style: TextStyle(color: Colors.white),
+              ),
               value: _biometricEnabled,
               onChanged: _toggleBiometric,
             ),
-            // Add other settings options here
           ],
         ),
       ),

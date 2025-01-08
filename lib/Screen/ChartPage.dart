@@ -3,13 +3,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:personal_financial_app/models/financial_model.dart';
 import 'package:personal_financial_app/navbar.dart';
 import '../database_helpers/database_helper.dart';
-import 'package:flutter/widgets.dart';
 import 'package:personal_financial_app/database_helpers/financial_database_helper.dart';
 
 class ChartPage extends StatefulWidget {
   final int currentYear;
 
-  ChartPage({required this.currentYear}); // Constructor
+  ChartPage({required this.currentYear});
 
   @override
   _ChartPageState createState() => _ChartPageState();
@@ -127,91 +126,145 @@ class _ChartPageState extends State<ChartPage> {
     return Scaffold(
       drawer: NavBar(),
       appBar: AppBar(
-        title: Text('Chart', style: TextStyle(color: Colors.white)),
+        title: Text('Financial Analytics',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+            )),
         backgroundColor: const Color.fromARGB(255, 24, 24, 24),
+        elevation: 0,
         iconTheme: IconThemeData(color: Colors.white),
         centerTitle: true,
       ),
-      body: PageView.builder(
-        itemCount: months.length * 2,
-        onPageChanged: (index) {
-          setState(() {
-            currentMonthIndex = index % months.length;
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color.fromARGB(255, 24, 24, 24),
+              Colors.black,
+            ],
+          ),
+        ),
+        child: PageView.builder(
+          itemCount: months.length * 2,
+          onPageChanged: (index) {
+            setState(() {
+              currentMonthIndex = index % months.length;
+              int year = index < months.length
+                  ? widget.currentYear
+                  : widget.currentYear - 1;
+              _loadData(currentMonthIndex, year);
+            });
+          },
+          itemBuilder: (context, index) {
             int year = index < months.length
                 ? widget.currentYear
-                : widget.currentYear -
-                    1; // Assuming previousYear is not defined
-            _loadData(currentMonthIndex, year);
-          });
-        },
-        itemBuilder: (context, index) {
-          int year = index < months.length
-              ? widget.currentYear
-              : widget.currentYear - 1;
-          return Container(
-            color: Colors.black,
-            padding: EdgeInsets.all(16.0),
-            child: Column(
+                : widget.currentYear - 1;
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${_getMonthName(months[currentMonthIndex])} $year',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildChartSection(
+                      'Expenses Overview',
+                      expenseSections,
+                      Colors.orange,
+                    ),
+                    SizedBox(height: 24),
+                    _buildChartSection(
+                      'Financial Overview',
+                      financialSections,
+                      Colors.blue,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartSection(
+      String title, List<PieChartSectionData> sections, Color accentColor) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: accentColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    '${_getMonthName(months[currentMonthIndex])} $year',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                Container(
+                  width: 4,
+                  height: 24,
+                  margin: EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    'Expenses Overview',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                Card(
-                  color: Colors.black,
-                  elevation: 4,
-                  child: Container(
-                    height: 250,
-                    padding: EdgeInsets.all(8.0),
-                    child: PieChart(
-                      PieChartData(
-                        sections: expenseSections,
-                        borderData: FlBorderData(show: false),
-                        centerSpaceRadius: 60,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    'Financial Overview',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                Card(
-                  color: Colors.black,
-                  elevation: 4,
-                  child: Container(
-                    height: 250,
-                    padding: EdgeInsets.all(8.0),
-                    child: PieChart(
-                      PieChartData(
-                        sections: financialSections,
-                        borderData: FlBorderData(show: false),
-                        centerSpaceRadius: 60,
-                      ),
-                    ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          Container(
+            height: 300,
+            padding: EdgeInsets.all(16),
+            child: PieChart(
+              PieChartData(
+                sections: sections,
+                borderData: FlBorderData(show: false),
+                centerSpaceRadius: 60,
+                sectionsSpace: 2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

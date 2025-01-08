@@ -14,11 +14,11 @@ class Homeloans extends StatefulWidget {
 class _HomeloansState extends State<Homeloans> {
   List<bool> isSelected = [false, true];
   double homePrice = 0.0;
-  double downPaymentPercentage = 10.0; // Default 10% down payment
-  double interestRate = 4.0; // Example average interest rate
-  int loanTenure = 30; // Default 30 years
+  double downPaymentPercentage = 10.0;
+  double interestRate = 4.0;
+  int loanTenure = 30;
   double marginOfFinance = 90.0;
-  double mrtaCost = 0.0; // Default 90%
+  double mrtaCost = 0.0;
 
   final TextEditingController homePriceController = TextEditingController();
   final TextEditingController interestRateController = TextEditingController();
@@ -28,34 +28,26 @@ class _HomeloansState extends State<Homeloans> {
 
   void calculateMonthlyPayment() {
     if (homePrice <= 0 || interestRate <= 0 || loanTenure <= 0) {
-      return; // Handle invalid inputs
+      return;
     }
 
-    // Calculate loan amount
     double downPayment = homePrice * (downPaymentPercentage / 100);
     double loanAmount = homePrice - downPayment;
 
-    // Monthly interest rate
     double monthlyRate = (interestRate / 100) / 12;
 
-    // Total payments
     int totalPayments = loanTenure * 12;
 
-    // Monthly payment formula
     double monthlyPayment = loanAmount *
         (monthlyRate * pow(1 + monthlyRate, totalPayments)) /
         (pow(1 + monthlyRate, totalPayments) - 1);
 
-    // Calculate the total payment and total interest paid
     double totalPayment = monthlyPayment * totalPayments;
     double totalInterestPaid = totalPayment - loanAmount;
 
-    // Estimate MRTA (a percentage of the loan amount, typically around 2-3%)
-    // Assuming MRTA rate is 3% for this example:
-    double mrtaRate = 0.03; // Change this rate as per requirement
+    double mrtaRate = 0.03;
     double mrtaCost = loanAmount * mrtaRate;
 
-    // Navigate to the summary screen
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -107,6 +99,7 @@ class _HomeloansState extends State<Homeloans> {
                 homePrice = double.tryParse(value) ?? 0.0;
               }),
               style: TextStyle(color: Colors.white),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             textFieldWithSlider(
               'Down Payment (%)',
@@ -116,6 +109,7 @@ class _HomeloansState extends State<Homeloans> {
               }),
               suffix: '%',
               style: TextStyle(color: Colors.white),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             textFieldWithSlider(
               'Interest Rate (Annual)',
@@ -125,6 +119,7 @@ class _HomeloansState extends State<Homeloans> {
               }),
               suffix: '%',
               style: TextStyle(color: Colors.white),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             lengthOfLoanWidget(),
             SizedBox(height: 20),
@@ -138,8 +133,7 @@ class _HomeloansState extends State<Homeloans> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        Suggest(), // Ensure Suggest is imported
+                    builder: (context) => Suggest(),
                   ),
                 );
               },
@@ -238,7 +232,7 @@ class _HomeloansState extends State<Homeloans> {
 
   Widget textFieldWithSlider(
       String label, TextEditingController controller, Function(String) onChange,
-      {String suffix = '', TextStyle? style}) {
+      {String suffix = '', TextStyle? style, TextInputType? keyboardType}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Column(
@@ -248,6 +242,7 @@ class _HomeloansState extends State<Homeloans> {
           TextFormField(
             controller: controller,
             onChanged: onChange,
+            keyboardType: keyboardType,
             decoration: InputDecoration(
               prefixText: suffix.isEmpty ? 'RM ' : null,
               suffixText: suffix,

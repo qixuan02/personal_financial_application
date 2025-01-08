@@ -23,8 +23,7 @@ class _InvestmentState extends State<Investment> {
   List<Stocks> _stocks = [];
   bool _isLoading = true;
 
-  final _symbolController =
-      TextEditingController(); // Controller for adding stocks
+  final _symbolController = TextEditingController();
 
   @override
   void initState() {
@@ -32,7 +31,6 @@ class _InvestmentState extends State<Investment> {
     _fetchAllStockPrices();
   }
 
-  // Fetch famous and user-selected stocks
   void _fetchAllStockPrices() async {
     final stockService = StockService();
     final allSymbols = [...famousStockSymbols, ...userStockSymbols];
@@ -43,14 +41,13 @@ class _InvestmentState extends State<Investment> {
     });
   }
 
-  // Add user-selected stock
   void _addUserStock(String symbol) {
     if (symbol.isNotEmpty && !userStockSymbols.contains(symbol.toUpperCase())) {
       setState(() {
         userStockSymbols.add(symbol.toUpperCase());
         _isLoading = true;
       });
-      _fetchAllStockPrices(); // Refresh the stock list
+      _fetchAllStockPrices();
       _symbolController.clear();
     }
   }

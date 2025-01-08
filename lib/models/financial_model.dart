@@ -13,7 +13,6 @@ class FinancialModel {
     required this.type,
   });
 
-  // Convert a FinancialModel into a Map. The keys must correspond to the column names in the database.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -24,7 +23,6 @@ class FinancialModel {
     };
   }
 
-  // Create a FinancialModel from a Map. This is used when retrieving data from the database.
   factory FinancialModel.fromMap(Map<String, dynamic> map) {
     try {
       return FinancialModel(
@@ -39,7 +37,6 @@ class FinancialModel {
     }
   }
 
-  // Optional: Add a method to validate the model's data
   bool isValid() {
     return name.isNotEmpty && amount > 0 && type.isNotEmpty;
   }

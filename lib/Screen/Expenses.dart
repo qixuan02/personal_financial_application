@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:personal_financial_app/Screen/AddCategoryPage.dart';
 import 'package:personal_financial_app/models/expense_model.dart';
-//import 'package:personal_financial_app/item.dart';
 import 'package:personal_financial_app/navbar.dart';
-//import 'package:personal_financial_app/widgets/add_expenses.dart';
-//import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-//import 'package:personal_financial_app/widgets/fund_condition_widget.dart';
 import 'package:personal_financial_app/database_helpers/database_helper.dart';
 import 'package:personal_financial_app/database_helpers/category_database.dart';
 import 'package:personal_financial_app/database_helpers/category_limit_database.dart';
@@ -28,7 +24,7 @@ class _ExpensesState extends State<Expenses> {
       CategoryLimitDatabaseHelper();
   List<ExpenseModel> items = [];
   DateTime today = DateTime.now();
-  //bool _isCalendarVisible = false;
+
   final itemController = TextEditingController();
   final amountController = TextEditingController();
   final dateController = TextEditingController();
@@ -108,9 +104,7 @@ class _ExpensesState extends State<Expenses> {
       );
 
       await _dbHelper.insertExpense(expenseModel);
-      // Wait for the expenses to load
 
-      // Clear the form
       itemController.clear();
       amountController.clear();
       dateController.clear();
@@ -134,7 +128,6 @@ class _ExpensesState extends State<Expenses> {
   }
 
   void _showAddExpenseDialog() {
-    // Reset the form state
     itemController.clear();
     amountController.clear();
     pickedDate = DateTime.now();
@@ -209,8 +202,7 @@ class _ExpensesState extends State<Expenses> {
                             ),
                           );
                           await _loadCategories();
-                          setState(
-                              () {}); // Rebuild the dialog to show new categories
+                          setState(() {});
                         },
                       ),
                     ],
@@ -267,9 +259,8 @@ class _ExpensesState extends State<Expenses> {
       try {
         int result = await _dbHelper.deleteExpense(expenseToDelete.id!);
         if (result > 0) {
-          await _loadExpenses(); // Reload all expenses
+          await _loadExpenses();
           if (mounted) {
-            // Check if widget is still mounted
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Expense deleted successfully'),
@@ -426,38 +417,31 @@ class _ExpensesState extends State<Expenses> {
 
   void _calculateCategoryExpenses() {
     categoryExpenses.clear();
-    // Get current month expenses only
+
     String currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
 
-    // Group current month's expenses by category
     for (var item in items) {
       String itemMonthKey = DateFormat('yyyy-MM').format(item.date);
-      // Only include expenses from current month
+
       if (!item.isIncome && itemMonthKey == currentMonthKey) {
-        // Sum up expenses for each category
         categoryExpenses[item.category] =
             (categoryExpenses[item.category] ?? 0) + item.amount.toDouble();
       }
     }
 
-    // Print for debugging
     print('Current month category expenses: $categoryExpenses');
   }
 
   Future<void> _checkLimits() async {
-    // Get all categories that have limits set
     for (var category in categories) {
-      // Use your categories list
       final limit = await _limitDbHelper.getCategoryLimit(category) ?? 0;
-      print('Checking limit for $category: Limit = $limit'); // Debug print
+      print('Checking limit for $category: Limit = $limit');
 
       if (limit > 0) {
-        // Only check if a limit is set
         final currentExpense = categoryExpenses[category] ?? 0.0;
-        print('Current expense for $category: $currentExpense'); // Debug print
-
+        print('Current expense for $category: $currentExpense');
         final percentageUsed = (currentExpense / limit) * 100;
-        print('Percentage used: $percentageUsed%'); // Debug print
+        print('Percentage used: $percentageUsed%');
 
         if (currentExpense >= limit) {
           _notifyUser(category, percentageUsed,
@@ -667,7 +651,6 @@ class _ExpensesState extends State<Expenses> {
                                 onTap: () => _showUpdateExpenseDialog(
                                     items.indexOf(expense)),
                                 onLongPress: () async {
-                                  // Handle deletion with proper state management
                                   await _deleteExpense(expense);
                                 },
                               ),
@@ -737,25 +720,20 @@ class _ExpensesState extends State<Expenses> {
 class ExpenseSearch {
   static List<ExpenseModel> filterExpenses(
       List<ExpenseModel> expenses, String query) {
-    // Trim whitespace from the query
     query = query.trim();
 
     if (query.isEmpty) {
-      return expenses; // Return all expenses if the query is empty
+      return expenses;
     }
 
-    // Attempt to parse the query as a double
     double? amountQuery = double.tryParse(query);
 
     return expenses.where((expense) {
-      // Check if the item name contains the query (case insensitive)
       bool matchesItem =
           expense.item.toLowerCase().contains(query.toLowerCase());
 
-      // Check if the amount matches the query
       bool matchesAmount = amountQuery != null && expense.amount == amountQuery;
 
-      // Return true if either condition matches
       return matchesItem || matchesAmount;
     }).toList();
   }

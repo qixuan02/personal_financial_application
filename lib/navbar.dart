@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:personal_financial_app/Screen/AlertPage.dart';
 import 'package:personal_financial_app/Screen/ChartPage.dart';
-// import 'package:personal_financial_application/Alert.dart';
 import 'package:personal_financial_app/Screen/CalculateLoans.dart';
-// import 'package:personal_financial_application/Chart.dart';
 import 'package:personal_financial_app/Screen/Expenses.dart';
 import 'package:personal_financial_app/Screen/FinancialPage.dart';
 import 'package:personal_financial_app/Screen/Investment.dart';
-// import 'package:personal_financial_app/Screen/LoginPage.dart';
 import 'package:personal_financial_app/Screen/UserSettingsPage.dart';
 import 'package:personal_financial_app/Screen/biometric_login.dart';
-// import 'package:personal_financial_application/Savings.dart';
-// import 'package:personal_financial_application/LoginPage.dart';
-//import 'package:personal_financial_application/models/stock.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NavBar extends StatefulWidget {
@@ -28,113 +22,218 @@ class _NavBarState extends State<NavBar> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          UserAccountsDrawerHeader(
-            accountName: Text(_username),
-            accountEmail: Text(''),
-            // currentAccountPicture: CircleAvatar(
-            //   child: ClipOval(child: Image.asset('')),
-            // ),
-            decoration: BoxDecoration(
-              color: Color(0xFF292728),
-            ),
-            otherAccountsPictures: [
-              IconButton(
-                icon: Icon(Icons.settings, color: Colors.white),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => UserSettingsPage(
-                        onUsernameChanged: (newUsername) {
-                          setState(() {
-                            _username =
-                                newUsername; // Update the username in the NavBar
-                          });
-                        },
+      child: Container(
+        color: Color(0xFF1E1E1E),
+        child: Column(
+          children: [
+            Container(
+              padding:
+                  EdgeInsets.only(top: MediaQuery.of(context).padding.top + 20),
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF292728),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
                       ),
                     ),
-                  );
-                },
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.blueGrey.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _username[0],
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _username,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Personal Finance',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.settings, color: Colors.white70),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UserSettingsPage(
+                                      onUsernameChanged: (newUsername) {
+                                        setState(() {
+                                          _username = newUsername;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          ListTile(
-            leading: Icon(Icons.attach_money_rounded),
-            title: Text('Expenses'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => Expenses(expenses: [])));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.credit_card_outlined),
-            title: Text('Financial'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => FinancialPage()));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.show_chart_rounded),
-            title: Text('Chart'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      ChartPage(currentYear: DateTime.now().year)));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.currency_exchange_rounded),
-            title: Text('Investment'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => Investment()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.calculate_outlined),
-            title: Text('Calculate Price'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => CalculateLoans()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.alarm_rounded),
-            title: const Text('Alert'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (BuildContext context) => CategoryAlertSettings()));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.power_settings_new_rounded),
-            title: Text('Logout'),
-            onTap: () async {
-              // Clear user session data
-              await _clearUserSession(); // Implement this method to clear session data
-
-              // Navigate to the LoginPage instead of BiometricLogin
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                    builder: (BuildContext context) => BiometricLogin()),
-              );
-            },
-          ),
-          // others icondata settings_ , moving_, search_, notifications_
-        ],
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                children: [
+                  _buildNavItem(
+                    icon: Icons.attach_money_rounded,
+                    title: 'Expenses',
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                          builder: (context) => Expenses(expenses: [])),
+                    ),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.credit_card_outlined,
+                    title: 'Financial',
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => FinancialPage()),
+                    ),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.show_chart_rounded,
+                    title: 'Chart',
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ChartPage(currentYear: DateTime.now().year),
+                      ),
+                    ),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.currency_exchange_rounded,
+                    title: 'Investment',
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => Investment()),
+                    ),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.calculate_outlined,
+                    title: 'Calculate Price',
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => CalculateLoans()),
+                    ),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.alarm_rounded,
+                    title: 'Alert',
+                    onTap: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                          builder: (context) => CategoryAlertSettings()),
+                    ),
+                  ),
+                  Divider(color: Colors.white24, thickness: 1, height: 40),
+                  _buildNavItem(
+                    icon: Icons.power_settings_new_rounded,
+                    title: 'Logout',
+                    isLogout: true,
+                    onTap: () async {
+                      await _clearUserSession();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                            builder: (context) => BiometricLogin()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Method to clear user session data
+  Widget _buildNavItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isLogout = false,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isLogout
+                ? Colors.red.withOpacity(0.2)
+                : Colors.blue.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: isLogout ? Colors.red : Colors.blue,
+            size: 22,
+          ),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isLogout ? Colors.red : Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: isLogout ? Colors.red.withOpacity(0.5) : Colors.white30,
+          size: 16,
+        ),
+      ),
+    );
+  }
+
   Future<void> _clearUserSession() async {
-    // Clear any stored user data, e.g., using SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('userToken'); // Example key for user token
-    // Add any other necessary cleanup here
+    await prefs.remove('userToken');
   }
 }

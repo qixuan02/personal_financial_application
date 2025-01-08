@@ -137,7 +137,6 @@ class DatabaseHelper {
     List<ExpenseModel> allExpenses = await getAllExpenses();
     if (allExpenses.isEmpty) return 0;
 
-    // Calculate total expenses
     double totalExpenses =
         allExpenses.fold(0, (sum, item) => sum + item.amount);
 
@@ -149,7 +148,6 @@ class DatabaseHelper {
           expense.date.month.toString().padLeft(2, '0'));
     }
 
-    // Calculate average based on the number of unique months
     return totalExpenses / uniqueMonths.length;
   }
 

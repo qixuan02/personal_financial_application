@@ -3,16 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:personal_financial_app/Screen/HomeLoans.dart';
 import 'package:personal_financial_app/Screen/suggest.dart';
-//import 'package:personal_financial_application/houseloan.dart';
-//import 'package:personal_financial_application/LoginPage.dart'; // Make sure this import points to the correct file.
+
 import 'package:personal_financial_app/navbar.dart';
 
 class CalculateLoans extends StatefulWidget {
   const CalculateLoans({super.key});
 
   @override
-  _CalculateLoansState createState() =>
-      _CalculateLoansState(); // Corrected this part
+  _CalculateLoansState createState() => _CalculateLoansState();
 }
 
 class _CalculateLoansState extends State<CalculateLoans> {
@@ -52,7 +50,7 @@ class _CalculateLoansState extends State<CalculateLoans> {
           ),
           backgroundColor: Color(0xFF292728),
           iconTheme: IconThemeData(
-            color: Colors.white, // Set the hamburger icon color to white
+            color: Colors.white,
           ),
           centerTitle: true,
         ),
@@ -127,10 +125,6 @@ class _CalculateLoansState extends State<CalculateLoans> {
                         fillColor: Colors.grey[400],
                         borderColor: Colors.grey,
                       ),
-                      // Text(
-                      //   'Calculator',
-                      //   style: GoogleFonts.robotoMono(fontSize: 35),
-                      // ),
                     ],
                   ),
                 ),
@@ -288,8 +282,7 @@ class _CalculateLoansState extends State<CalculateLoans> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      Suggest(), // Ensure Suggest is imported
+                                  builder: (context) => Suggest(),
                                 ),
                               );
                             },
@@ -387,8 +380,7 @@ class _CalculateLoansState extends State<CalculateLoans> {
           child: TextField(
             keyboardType: TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(
-                  r'^\d*\.?\d*')), // Allows numbers and one decimal point
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
             ],
             controller: controller,
             decoration: InputDecoration(
